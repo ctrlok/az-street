@@ -75,6 +75,7 @@ func TestRenderStepSucc(t *testing.T) {
 	}
 	street.createID()
 	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
+	defer os.RemoveAll(dir)
 	err := renderSVG(street, dir)
 	assert.NoError(t, err, "render SVG files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.svg"))
@@ -110,6 +111,7 @@ func TestRenderStepFail(t *testing.T) {
 	}
 	street.createID()
 	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
+	defer os.RemoveAll(dir)
 	err := renderPNG(dir)
 	assert.Error(t, err, "render PNG files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.png"))
@@ -137,7 +139,9 @@ func TestMakeArchiveSucc(t *testing.T) {
 	}
 	street.createID()
 	archive, err := makeArchive(&street)
-	assert.NotNil(t, err, "Check archove created")
+	assert.NoError(t, err, "Check archive created")
 	_, err = os.Stat(archive)
-	assert.Nil(t, err, "Check archove file exist")
+	assert.Nil(t, err, "Check archive file exist")
+	filesInTmp, _ := ioutil.ReadDir(archiveDir)
+	assert.Equal(t, 1, len(filesInTmp), "should be only one file in archive dir")
 }

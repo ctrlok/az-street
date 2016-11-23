@@ -69,14 +69,17 @@ func startTimer() *timer {
 // ConcLevel - постоянная, которая определяет сколько одновременных созданий изображений возможно
 const ConcLevel int = 4
 
-// tmpDirPath is a path for saving files before it was rendered. Default to ENV["TMPDIR"]
+// tmpDirPath is a path for saving files before it was rendered. Default to os.Tempdir (/tmp at linux)
 var tmpDirPath = os.Getenv("RTMP")
+
+// tmpDirPath is a path for saving files before it was rendered. Default to os.Tempdir
+var archiveDir = os.Getenv("ARCHIVE_DIR")
 
 var inChan chan Street
 
 func init() {
-	if tmpDirPath == "" {
-		tmpDirPath = os.Getenv("TMPDIR")
+	if archiveDir == "" {
+		archiveDir = os.TempDir()
 	}
 	log.SetOutput(os.Stdout)
 	log.SetLevel(log.WarnLevel)
@@ -115,7 +118,7 @@ func makeArchive(street *Street) (archive string, err error) {
 	if err != nil {
 		return
 	}
-	defer removeDir(dir)
+	defer os.RemoveAll(dir)
 	log.WithField("street", street.ID).WithField("directory", dir).Debug("Temporary directory was created")
 	t := startTimer()
 	err = renderSVG(*street, dir)
@@ -143,7 +146,7 @@ func makeArchive(street *Street) (archive string, err error) {
 		return
 	}
 	log.WithField("street", street.ID).WithField("directory", dir).WithField("gen_time", t.getDiff()).Info("svg_removed")
-	archive, err = createArchive(dir)
+	archive, err = createArchive(dir, street.ID)
 	if err != nil {
 		return
 	}
@@ -297,12 +300,14 @@ func removeSVG(dir string) (err error) {
 	return nil
 }
 
-func createArchive(dir string) (archive string, err error) {
+func createArchive(dir string, id string) (archive string, err error) {
+	archive = fmt.Sprint(archiveDir, "/", id, ".zip")
+	cmd := exec.Command("zip", "-r", archive, dir)
+	err = cmd.Run()
+	if err != nil {
+		return archive, err
+	}
 	return archive, nil
-}
-
-func removeDir(dir string) (err error) {
-	return nil
 }
 
 func httpHandler(w http.ResponseWriter, r *http.Request) {
