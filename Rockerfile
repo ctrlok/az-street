@@ -1,0 +1,28 @@
+FROM golang:1.7.3
+WORKDIR /go/src/github.com/ctrlok/AZ-street
+ADD vendor vendor
+ADD *.go /go/src/github.com/ctrlok/AZ-street
+ENV DEBUG=true
+ENV CGO_ENABLED=0
+# RUN go test -test.short
+RUN go test -c
+# RUN go build -a -installsuffix cgo
+# EXPORT AZ-street AZ-street
+EXPORT AZ-street.test AZ-street.test
+
+FROM alpine:latest
+MAINTAINER rasch <me@randyschneck.com>
+RUN apk update && apk upgrade && apk add inkscape ttf-dejavu && \
+  rm -rf /var/cache/apk/* && \
+  adduser -D inkscaper
+# USER inkscaper
+WORKDIR /home/inkscaper
+RUN mkdir -p .local/share && \
+    touch .local/share/recently-used.xbel
+TAG inkscape
+
+FROM inkscape
+WORKDIR /opt
+ENV DEBUG=true
+IMPORT AZ-street.test /bin/AZ-street.test
+RUN AZ-street.test
