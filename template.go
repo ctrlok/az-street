@@ -10,7 +10,7 @@ const templStreet1 string = `<svg id="Layer_1" data-name="Layer 1"
     <text class="cls-2" transform="translate(98.42 340.64)">
         {{ .StreetNameUA }}
     </text>
-    <text class="cls-10" transform="translate(107.32 537.78)">>
+    <text class="cls-10" transform="translate(107.32 537.78)">
        {{ .StreetNameEng }} {{ .StreetType }}
     </text>
     <text class="cls-14" transform="translate(107.3 118.27)">

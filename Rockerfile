@@ -25,5 +25,6 @@ FROM inkscape
 WORKDIR /opt
 ENV DEBUG=true
 IMPORT AZ-street.test /bin/AZ-street.test
-RUN AZ-street.test
 ATTACH sh
+# RUN AZ-street.test
+TAG tmp1

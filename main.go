@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/md5"
 	"encoding/json"
-	"errors"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/ctrlok/uatranslit/uatranslit"
@@ -13,9 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"text/template"
 	"time"
-	"unicode/utf8"
 )
 
 // Street это струтктура, в которую мы распарсим входящий json
@@ -91,6 +88,11 @@ func init() {
 func main() {
 	startInscapeHandlers()
 	http.HandleFunc("/", httpHandler)
+	http.HandleFunc("/svg.svg", httpHandlerSVG)
+	err := http.ListenAndServe(":3001", nil)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func startInscapeHandlers() {
@@ -114,11 +116,17 @@ func inscapeHandler() {
 }
 
 func makeArchive(street *Street) (archive string, err error) {
-	dir, err := ioutil.TempDir(tmpDirPath, "archive")
+	archive = fmt.Sprint(archiveDir, "/", street.ID, ".zip")
+	_, err = os.Stat(archive)
+	if err == nil {
+		log.WithField("street", street.ID).Info("Archive already exist, skip...")
+		return
+	}
+	dir, err := ioutil.TempDir(tmpDirPath, "")
 	if err != nil {
 		return
 	}
-	defer os.RemoveAll(dir)
+	defer removeDirs(dir)
 	log.WithField("street", street.ID).WithField("directory", dir).Debug("Temporary directory was created")
 	t := startTimer()
 	err = renderSVG(*street, dir)
@@ -136,17 +144,12 @@ func makeArchive(street *Street) (archive string, err error) {
 		return
 	}
 	log.WithField("street", street.ID).WithField("directory", dir).WithField("gen_time", t.getDiff()).Info("eps_generated")
-	err = renderPDF(dir)
-	if err != nil {
-		return
-	}
-	log.WithField("street", street.ID).WithField("directory", dir).WithField("gen_time", t.getDiff()).Info("pdf_generated")
 	err = removeSVG(dir)
 	if err != nil {
 		return
 	}
 	log.WithField("street", street.ID).WithField("directory", dir).WithField("gen_time", t.getDiff()).Info("svg_removed")
-	archive, err = createArchive(dir, street.ID)
+	err = createArchive(dir, archive)
 	if err != nil {
 		return
 	}
@@ -154,33 +157,23 @@ func makeArchive(street *Street) (archive string, err error) {
 	return
 }
 
+func removeDirs(dir string) {
+	err := os.RemoveAll(dir)
+	if err != nil {
+		log.WithField("directory", dir).Error(err)
+	}
+}
+
 // renderSVG will create svg files in directory dir
 func renderSVG(street Street, dir string) (err error) {
 	log.WithField("street", street.ID).WithField("directory", dir).Debug("Start renderSVG")
-	err = renderSVGstreet(street, dir)
-	if err != nil {
-		log.WithField("street", street.ID).WithField("directory", dir).Errorf("Street template render problem: %s", err)
-		return err
-	}
-	return nil
-}
-
-// renderSVGstreet will create street.svg file
-func renderSVGstreet(street Street, dir string) (err error) {
-	log.WithField("street", street.ID).WithField("directory", dir).Debug("Start renderSVG for street")
 	defineStreetTypeUA(&street)
 	defineStreetName(&street)
-	log.WithField("street", street.ID).WithField("directory", dir).Debug("Start SVG template generation for street")
-	templ, err := selectStreetSVGtemplate(street)
+	err = renderSVGstreet(dir, street)
 	if err != nil {
 		return err
 	}
-	log.WithField("street", street.ID).WithField("directory", dir).Debug("Start render SVG template for street")
-	err = renderStreetSVGtemplate(dir, street, templ)
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 func defineStreetTypeUA(street *Street) {
@@ -195,36 +188,13 @@ func defineStreetName(street *Street) {
 	street.StreetNameEng = string(uatranslit.ReplaceUARunes([]rune(street.StreetNameUA)))
 }
 
-func selectStreetSVGtemplate(street Street) (t *template.Template, err error) {
-	var templ string
-	streetLen := utf8.RuneCountInString(street.StreetNameUA)
-	log.WithField("street", street.ID).Debugf("Street has %v runes", streetLen)
-	switch {
-	case streetLen <= 8:
-		templ = templStreet1
-	case streetLen > 8 && streetLen <= 12:
-		templ = templStreet2
-	case streetLen > 12 && streetLen <= 17:
-		templ = templStreet3
-	case streetLen > 17 && streetLen <= 21:
-		templ = templStreet4
-	default:
-		return t, errors.New("can't parse street bigger than 21 symbols")
-	}
-	t, err = template.New("").Parse(templ)
-	if err != nil {
-		return t, err
-	}
-	return t, nil
-}
-
-func renderStreetSVGtemplate(dir string, street Street, t *template.Template) (err error) {
+func renderSVGstreet(dir string, street Street) (err error) {
 	file, err := os.Create(fmt.Sprint(dir, "/street.svg"))
-	defer file.Close()
 	if err != nil {
 		return err
 	}
-	err = t.Execute(file, street)
+	defer file.Close()
+	err = streetSVG(street, file)
 	if err != nil {
 		return err
 	}
@@ -271,26 +241,6 @@ func renderEPSstreet(dir string) (err error) {
 	return nil
 }
 
-func renderPDF(dir string) (err error) {
-	log.WithField("directory", dir).Debug("Start PDF render")
-	err = renderPDFstreet(dir)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func renderPDFstreet(dir string) (err error) {
-	svgPath := fmt.Sprint(dir, "/street.svg")
-	pdfPath := fmt.Sprint(dir, "/street.pdf")
-	cmd := exec.Command("inkscape", "-z", "-T", "-A", pdfPath, svgPath)
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func removeSVG(dir string) (err error) {
 	cmd := exec.Command("rm", fmt.Sprint(dir, "/street.svg"))
 	err = cmd.Run()
@@ -300,14 +250,10 @@ func removeSVG(dir string) (err error) {
 	return nil
 }
 
-func createArchive(dir string, id string) (archive string, err error) {
-	archive = fmt.Sprint(archiveDir, "/", id, ".zip")
-	cmd := exec.Command("zip", "-r", archive, dir)
+func createArchive(dir, archive string) (err error) {
+	cmd := exec.Command("zip", "-r", "-j", archive, dir)
 	err = cmd.Run()
-	if err != nil {
-		return archive, err
-	}
-	return archive, nil
+	return err
 }
 
 func httpHandler(w http.ResponseWriter, r *http.Request) {

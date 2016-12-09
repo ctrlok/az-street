@@ -75,7 +75,7 @@ func TestRenderStepSucc(t *testing.T) {
 	}
 	street.createID()
 	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
-	defer os.RemoveAll(dir)
+	defer removeDirs(dir)
 	err := renderSVG(street, dir)
 	assert.NoError(t, err, "render SVG files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.svg"))
@@ -88,10 +88,6 @@ func TestRenderStepSucc(t *testing.T) {
 	assert.NoError(t, err, "render EPS files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.eps"))
 	assert.Nil(t, err, "Check eps file exist")
-	err = renderPDF(dir)
-	assert.NoError(t, err, "render PDF files")
-	_, err = os.Stat(fmt.Sprint(dir, "/street.pdf"))
-	assert.Nil(t, err, "Check pdf file exist")
 	err = removeSVG(dir)
 	assert.NoError(t, err, "remove SVG files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.svg"))
@@ -111,7 +107,7 @@ func TestRenderStepFail(t *testing.T) {
 	}
 	street.createID()
 	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
-	defer os.RemoveAll(dir)
+	defer removeDirs(dir)
 	err := renderPNG(dir)
 	assert.Error(t, err, "render PNG files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.png"))
@@ -120,10 +116,6 @@ func TestRenderStepFail(t *testing.T) {
 	assert.Error(t, err, "render EPS files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.eps"))
 	assert.NotNil(t, err, "Check eps file exist")
-	err = renderPDF(dir)
-	assert.Error(t, err, "render PDF files")
-	_, err = os.Stat(fmt.Sprint(dir, "/street.pdf"))
-	assert.NotNil(t, err, "Check pdf file exist")
 }
 
 func TestMakeArchiveSucc(t *testing.T) {
@@ -131,9 +123,9 @@ func TestMakeArchiveSucc(t *testing.T) {
 		t.Skip("Skip integration test in short mode")
 	}
 	street := Street{
-		StreetNameUA:        "Коломийський",
-		StreetNum:           "22/1а",
-		StreetType:          "provulok",
+		StreetNameUA:        "Варенична",
+		StreetNum:           "22",
+		StreetType:          "vulitsya",
 		StreetPositionFirst: true,
 		StreetPositionLast:  true,
 	}
