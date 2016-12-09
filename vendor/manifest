@@ -10,6 +10,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/ajstarks/svgo",
+			"repository": "https://github.com/ajstarks/svgo",
+			"vcs": "git",
+			"revision": "672fe547df4e49efc6db67a74391368bcb149b37",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/ctrlok/uatranslit/uatranslit",
 			"repository": "https://github.com/ctrlok/uatranslit",
 			"vcs": "git",
@@ -36,6 +44,33 @@
 			"notests": true
 		},
 		{
+			"importpath": "golang.org/x/tools/go/ast/astutil",
+			"repository": "https://go.googlesource.com/tools",
+			"vcs": "git",
+			"revision": "167995c67fa45f3a7fc8dab62bb872212e397c11",
+			"branch": "master",
+			"path": "go/ast/astutil",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/tools/go/buildutil",
+			"repository": "https://go.googlesource.com/tools",
+			"vcs": "git",
+			"revision": "167995c67fa45f3a7fc8dab62bb872212e397c11",
+			"branch": "master",
+			"path": "go/buildutil",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/tools/go/loader",
+			"repository": "https://go.googlesource.com/tools",
+			"vcs": "git",
+			"revision": "167995c67fa45f3a7fc8dab62bb872212e397c11",
+			"branch": "master",
+			"path": "/go/loader",
+			"notests": true
+		},
+		{
 			"importpath": "gopkg.in/airbrake/gobrake.v2",
 			"repository": "https://gopkg.in/airbrake/gobrake.v2",
 			"vcs": "git",
@@ -48,6 +83,22 @@
 			"repository": "https://gopkg.in/gemnasium/logrus-airbrake-hook.v2",
 			"vcs": "git",
 			"revision": "bfee1239d796830ca346767650cce5ba90d58c57",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "honnef.co/go/gcsizes",
+			"repository": "https://github.com/dominikh/gcsizes",
+			"vcs": "git",
+			"revision": "776fa6877dfa3fcf92e368cc5ad9dc1cefd3ca7e",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "honnef.co/go/structlayout",
+			"repository": "https://github.com/dominikh/go-structlayout",
+			"vcs": "git",
+			"revision": "504fdf06ef5c0d83a29c594b3a169af68b9c2e14",
 			"branch": "master",
 			"notests": true
 		}
