@@ -21,7 +21,7 @@
 			"importpath": "github.com/ctrlok/uatranslit/uatranslit",
 			"repository": "https://github.com/ctrlok/uatranslit",
 			"vcs": "git",
-			"revision": "605e4aadbc8de9cd7ba14fb03949dba204e8f503",
+			"revision": "fb70d887e6cbb4b747a5a5ab222016dad35e58bc",
 			"branch": "master",
 			"path": "/uatranslit",
 			"notests": true
