@@ -28,3 +28,8 @@ IMPORT AZ-street.test /bin/AZ-street.test
 ATTACH sh
 # RUN AZ-street.test
 TAG tmp1
+
+FROM ubuntu
+RUN apt-get update
+RUN apt-get install -y libimage-exiftool-perl
+TAG metad

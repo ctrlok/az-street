@@ -24,19 +24,19 @@ func TestHttpHandlerErrJson(t *testing.T) {
 func TestDecodeSucc(t *testing.T) {
 	assert := assert.New(t)
 	body := strings.NewReader(`{
-    "street_name_ua": "Коломийський",
-    "street_type": "provulok",
-    "street_num": "22/1а",
-    "street_position_first": true,
-    "street_position_last": true
+    "name_ua": "Коломийський",
+    "type": "provulok",
+    "num": "22/1а",
+		"prev": "31",
+		"next": "33"
 }`)
 	street, err := decode(body)
 	assert.NoError(err, "Decode problem")
-	assert.Equal("Коломийський", street.StreetNameUA, "")
-	assert.Equal("22/1а", street.StreetNum, "")
-	assert.True(street.StreetPositionFirst, "")
-	assert.True(street.StreetPositionLast, "")
-	assert.Equal("provulok", street.StreetType, "")
+	assert.Equal("Коломийський", street.NameUA, "")
+	assert.Equal("22/1а", street.Num, "")
+	assert.Equal("31", street.Prev)
+	assert.Equal("33", street.Next)
+	assert.Equal("provulok", street.Type, "")
 }
 
 func TestDecodeErr(t *testing.T) {
@@ -47,19 +47,19 @@ func TestDecodeErr(t *testing.T) {
 	assert.Error(err, "")
 
 	// Test not valid json
-	body = strings.NewReader(`{"street_name_ua":1}`)
+	body = strings.NewReader(`{"name_ua":1}`)
 	_, err = decode(body)
 	assert.Error(err, "")
 }
 
 func TestDefineStreetName(t *testing.T) {
-	street := Street{StreetNameUA: "Коломийський"}
+	street := Street{NameUA: "Коломийський"}
 	defineStreetName(&street)
-	assert.Equal(t, "Kolomyiskyi", street.StreetNameEng, "")
+	assert.Equal(t, "Kolomyiskyi", street.NameEng, "")
 
-	street2 := Street{StreetNameUA: "коломийський"}
+	street2 := Street{NameUA: "коломийський"}
 	defineStreetName(&street2)
-	assert.Equal(t, "Kolomyiskyi", street2.StreetNameEng, "test capitalize")
+	assert.Equal(t, "Kolomyiskyi", street2.NameEng, "test capitalize")
 }
 
 func TestRenderStepSucc(t *testing.T) {
@@ -67,11 +67,11 @@ func TestRenderStepSucc(t *testing.T) {
 		t.Skip("Skip integration test in short mode")
 	}
 	street := Street{
-		StreetNameUA:        "Коломийський",
-		StreetNum:           "22/1а",
-		StreetType:          "provulok",
-		StreetPositionFirst: true,
-		StreetPositionLast:  true,
+		NameUA: "Коломийський",
+		Num:    "22/1а",
+		Type:   "provulok",
+		Next:   "33",
+		Prev:   "31",
 	}
 	street.createID()
 	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
@@ -98,14 +98,6 @@ func TestRenderStepFail(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skip integration test in short mode")
 	}
-	street := Street{
-		StreetNameUA:        "Коломийський",
-		StreetNum:           "22/1а",
-		StreetType:          "provulok",
-		StreetPositionFirst: true,
-		StreetPositionLast:  true,
-	}
-	street.createID()
 	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
 	defer removeDirs(dir)
 	err := renderPNG(dir)
@@ -123,11 +115,9 @@ func TestMakeArchiveSucc(t *testing.T) {
 		t.Skip("Skip integration test in short mode")
 	}
 	street := Street{
-		StreetNameUA:        "Варенична",
-		StreetNum:           "22",
-		StreetType:          "vulitsya",
-		StreetPositionFirst: true,
-		StreetPositionLast:  true,
+		NameUA: "Варенична",
+		Num:    "22",
+		Type:   "vulitsya",
 	}
 	street.createID()
 	archive, err := makeArchive(&street)
@@ -136,4 +126,22 @@ func TestMakeArchiveSucc(t *testing.T) {
 	assert.Nil(t, err, "Check archive file exist")
 	filesInTmp, _ := ioutil.ReadDir(archiveDir)
 	assert.Equal(t, 1, len(filesInTmp), "should be only one file in archive dir")
+}
+
+func TestMakeAllImages(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skip integration test in short mode")
+	}
+	street := Street{
+		NameUA: "Щорса",
+		Num:    "2",
+		Type:   "provulok",
+		Prev:   "31",
+		Next:   "33",
+	}
+	street.createID()
+	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
+	defer removeDirs(dir)
+	renderSVG(street, dir)
+
 }

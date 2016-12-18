@@ -17,16 +17,16 @@ import (
 
 // Street это струтктура, в которую мы распарсим входящий json
 type Street struct {
-	StreetNameUA        string `json:"street_name_ua"`
-	StreetType          string `json:"street_type"`
-	StreetNum           string `json:"street_num"`
-	StreetPositionFirst bool   `json:"street_position_first"`
-	StreetPositionLast  bool   `json:"street_position_last"`
-	StreetNameEng       string
-	StreetTypeUA        string
-	ID                  string
-	out                 chan string
-	err                 chan error
+	NameUA  string `json:"name_ua"`
+	Type    string `json:"type"`
+	Num     string `json:"num"`
+	Prev    string `json:"prev"`
+	Next    string `json:"next"`
+	NameEng string
+	TypeUA  string
+	ID      string
+	out     chan string
+	err     chan error
 }
 
 func (s *Street) createID() {
@@ -88,7 +88,6 @@ func init() {
 func main() {
 	startInscapeHandlers()
 	http.HandleFunc("/", httpHandler)
-	http.HandleFunc("/svg.svg", httpHandlerSVG)
 	err := http.ListenAndServe(":3001", nil)
 	if err != nil {
 		log.Panic(err)
@@ -173,19 +172,23 @@ func renderSVG(street Street, dir string) (err error) {
 	if err != nil {
 		return err
 	}
+	err = renderSVGnum(dir, street)
+	if err != nil {
+		return err
+	}
 	return
 }
 
 func defineStreetTypeUA(street *Street) {
-	street.StreetTypeUA = streetType[street.StreetType]
-	if street.StreetTypeUA == "" {
-		log.WithField("street", street.ID).Warnf("No UA definition for type '%s'", street.StreetType)
+	street.TypeUA = streetType[street.Type]
+	if street.TypeUA == "" {
+		log.WithField("street", street.ID).Warnf("No UA definition for type '%s'", street.Type)
 	}
 }
 
 func defineStreetName(street *Street) {
-	street.StreetNameUA = strings.Title(street.StreetNameUA)
-	street.StreetNameEng = string(uatranslit.ReplaceUARunes([]rune(street.StreetNameUA)))
+	street.NameUA = strings.Title(street.NameUA)
+	street.NameEng = string(uatranslit.ReplaceUARunes([]rune(street.NameUA)))
 }
 
 func renderSVGstreet(dir string, street Street) (err error) {
