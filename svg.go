@@ -73,11 +73,9 @@ func numSVG(street Street, w io.Writer) (err error) {
 	canvas := svg.New(w)
 	numLen := utf8.RuneCountInString(street.Num)
 	matchedString := regexp.MustCompile("^([0-9]+)([^0-9]?/?[0-9]*)?([^0-9])?$").FindStringSubmatch(street.Num)
-	fmt.Println(matchedString)
 	bigNums := []bigNumStruct{}
 	switch {
 	case numLen <= 2:
-		fmt.Println("Type 1: ")
 		width = 2539
 		widthPhys = 215
 		widthLineShort = 720
@@ -86,7 +84,6 @@ func numSVG(street Street, w io.Writer) (err error) {
 		arrowTranslate2 = 920
 		bigNums = subMatch(width, matchedString)
 	case numLen == 3 || numLen == 4 && len(matchedString[1]) == 1:
-		fmt.Println("Type 2: ")
 		width = 3248
 		widthPhys = 275
 		widthLineShort = 1049
@@ -95,7 +92,6 @@ func numSVG(street Street, w io.Writer) (err error) {
 		arrowTranslate2 = 1244
 		bigNums = subMatch(width, matchedString)
 	case numLen == 4 || numLen == 5 && len(matchedString[1]) == 2:
-		fmt.Println("Type 3: ")
 		width = 4015
 		widthPhys = 340
 		widthLineShort = 1428
@@ -116,13 +112,7 @@ func numSVG(street Street, w io.Writer) (err error) {
 	canvas.Roundrect(0, 0, width, height, 50, 50, "fill:#262741")
 	for _, num := range bigNums {
 		canvas.Text(num.x, yMainText, num.num, num.style)
-		// canvas.Rect(num.x, 0, 16, 9999, "fill:#FFFFFF")
 	}
-	// canvas.Text(391, yMainText, "2", fmt.Sprint(mainNumBig, ";fill:#B22222;"))
-	// canvas.Text(1269, yMainText, "2", fmt.Sprint(mainNumBig, ";fill:#B22222;")) // 878 == 1.810933941
-	// canvas.Text(width/2, yMainText, "22", fmt.Sprint(mainNumBig, ";fill:#B22222;text-anchor:middle;"))
-	// canvas.Text(width/2-500/2+501, yMainText, "2", fmt.Sprint(mainNumBig, ";fill:#B22222;"))
-	// canvas.Text(width/2+878/2, yMainText, "2", fmt.Sprint(mainNumBig, ";fill:#B22222;")) // 878 == 1.810933941
 
 	canvas.Gtransform("translate(470, 1716)")
 	if street.Prev != "" {
@@ -151,7 +141,6 @@ func numSVG(street Street, w io.Writer) (err error) {
 }
 
 func subMatch(width int, parsed []string) (bigNums []bigNumStruct) {
-	fmt.Println(parsed)
 	widthText := (len(parsed[1]) * 878 / 2) + (utf8.RuneCountInString(parsed[2]) * 500 / 2) + (utf8.RuneCountInString(parsed[3]) * 500 / 2)
 	for _, r := range parsed[1] {
 		bigNums = append(bigNums, bigNumStruct{style: mainNumBig, num: string(r), x: width/2 - widthText})
