@@ -29,6 +29,18 @@ type Street struct {
 	err     chan error
 }
 
+func (s *Street) defineStreetTypeUA() {
+	s.TypeUA = streetType[s.Type]
+	if s.TypeUA == "" {
+		log.WithField("street", s.ID).Warnf("No UA definition for type '%s'", s.Type)
+	}
+}
+
+func (s *Street) defineStreetName() {
+	s.NameUA = strings.Title(s.NameUA)
+	s.NameEng = string(uatranslit.ReplaceUARunes([]rune(s.NameUA)))
+}
+
 func (s *Street) createID() {
 	s.ID = fmt.Sprintf("%x", md5.Sum([]byte(fmt.Sprint(s))))
 	log.WithField("streetLong", *s).WithField("street", s.ID)
@@ -88,6 +100,8 @@ func init() {
 func main() {
 	startInscapeHandlers()
 	http.HandleFunc("/", httpHandler)
+	http.HandleFunc("/street.svg", svgHandlerStreet)
+	http.HandleFunc("/num.svg", svgHandlerNum)
 	err := http.ListenAndServe(":3001", nil)
 	if err != nil {
 		log.Panic(err)
@@ -166,8 +180,8 @@ func removeDirs(dir string) {
 // renderSVG will create svg files in directory dir
 func renderSVG(street Street, dir string) (err error) {
 	log.WithField("street", street.ID).WithField("directory", dir).Debug("Start renderSVG")
-	defineStreetTypeUA(&street)
-	defineStreetName(&street)
+	street.defineStreetTypeUA()
+	street.defineStreetName()
 	err = renderSVGstreet(dir, street)
 	if err != nil {
 		return err
@@ -177,18 +191,6 @@ func renderSVG(street Street, dir string) (err error) {
 		return err
 	}
 	return
-}
-
-func defineStreetTypeUA(street *Street) {
-	street.TypeUA = streetType[street.Type]
-	if street.TypeUA == "" {
-		log.WithField("street", street.ID).Warnf("No UA definition for type '%s'", street.Type)
-	}
-}
-
-func defineStreetName(street *Street) {
-	street.NameUA = strings.Title(street.NameUA)
-	street.NameEng = string(uatranslit.ReplaceUARunes([]rune(street.NameUA)))
 }
 
 func renderSVGstreet(dir string, street Street) (err error) {
@@ -204,18 +206,35 @@ func renderSVGstreet(dir string, street Street) (err error) {
 	return nil
 }
 
-func renderPNG(dir string) (err error) {
-	log.WithField("directory", dir).Debug("Start PNG render")
-	err = renderPNGstreet(dir)
+func renderSVGnum(dir string, street Street) (err error) {
+	file, err := os.Create(fmt.Sprint(dir, "/num.svg"))
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	err = numSVG(street, file)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func renderPNGstreet(dir string) (err error) {
-	svgPath := fmt.Sprint(dir, "/street.svg")
-	pngPath := fmt.Sprint(dir, "/street.png")
+func renderPNG(dir string) (err error) {
+	log.WithField("directory", dir).Debug("Start PNG render")
+	err = makePNG("street", dir)
+	if err != nil {
+		return err
+	}
+	err = makePNG("num", dir)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func makePNG(name, dir string) (err error) {
+	svgPath := fmt.Sprint(dir, "/", name, ".svg")
+	pngPath := fmt.Sprint(dir, "/", name, ".png")
 	cmd := exec.Command("inkscape", "-z", "-T", "-e", pngPath, svgPath)
 	err = cmd.Run()
 	if err != nil {
@@ -226,16 +245,20 @@ func renderPNGstreet(dir string) (err error) {
 
 func renderEPS(dir string) (err error) {
 	log.WithField("directory", dir).Debug("Start EPS render")
-	err = renderEPSstreet(dir)
+	err = makeEPS("street", dir)
+	if err != nil {
+		return err
+	}
+	err = makeEPS("num", dir)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func renderEPSstreet(dir string) (err error) {
-	svgPath := fmt.Sprint(dir, "/street.svg")
-	epsPath := fmt.Sprint(dir, "/street.eps")
+func makeEPS(name, dir string) (err error) {
+	svgPath := fmt.Sprint(dir, "/", name, ".svg")
+	epsPath := fmt.Sprint(dir, "/", name, ".eps")
 	cmd := exec.Command("inkscape", "-z", "-T", "-E", epsPath, svgPath)
 	err = cmd.Run()
 	if err != nil {
@@ -250,6 +273,11 @@ func removeSVG(dir string) (err error) {
 	if err != nil {
 		return err
 	}
+	cmd = exec.Command("rm", fmt.Sprint(dir, "/num.svg"))
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -259,9 +287,27 @@ func createArchive(dir, archive string) (err error) {
 	return err
 }
 
+func svgHandlerNum(w http.ResponseWriter, r *http.Request) {
+	street, _ := decode(r.Body)
+	street.createID()
+	street.defineStreetTypeUA()
+	street.defineStreetName()
+	numSVG(street, w)
+}
+
+func svgHandlerStreet(w http.ResponseWriter, r *http.Request) {
+	street, _ := decode(r.Body)
+	street.createID()
+	street.defineStreetTypeUA()
+	street.defineStreetName()
+	streetSVG(street, w)
+}
+
 func httpHandler(w http.ResponseWriter, r *http.Request) {
 	street, err := decode(r.Body)
 	street.createID()
+	street.defineStreetTypeUA()
+	street.defineStreetName()
 	if err != nil {
 		http.Redirect(w, r, err.Error(), http.StatusInternalServerError)
 		return

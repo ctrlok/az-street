@@ -54,11 +54,11 @@ func TestDecodeErr(t *testing.T) {
 
 func TestDefineStreetName(t *testing.T) {
 	street := Street{NameUA: "Коломийський"}
-	defineStreetName(&street)
+	street.defineStreetName()
 	assert.Equal(t, "Kolomyiskyi", street.NameEng, "")
 
 	street2 := Street{NameUA: "коломийський"}
-	defineStreetName(&street2)
+	street2.defineStreetName()
 	assert.Equal(t, "Kolomyiskyi", street2.NameEng, "test capitalize")
 }
 
@@ -117,6 +117,8 @@ func TestMakeArchiveSucc(t *testing.T) {
 	street := Street{
 		NameUA: "Варенична",
 		Num:    "22",
+		Prev:   "20",
+		Next:   "24",
 		Type:   "vulitsya",
 	}
 	street.createID()
@@ -142,6 +144,11 @@ func TestMakeAllImages(t *testing.T) {
 	street.createID()
 	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
 	defer removeDirs(dir)
-	renderSVG(street, dir)
+	err := renderSVG(street, dir)
+	assert.NoError(t, err, "")
+	err = renderPNG(dir)
+	assert.NoError(t, err, "")
+	err = renderEPS(dir)
+	assert.NoError(t, err, "")
 
 }

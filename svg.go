@@ -53,6 +53,10 @@ type bigNumStruct struct {
 	x     int
 }
 
+const mainNumBig = "font-family:ProbaNav2-Medium, Proba Nav2;font-size:1590;font-weight:400;fill:#FFFFFF;"
+const mainNumLittle = "font-family:ProbaNav2-SemiBold, Proba Nav2;font-size:910;font-weight:500;fill:#FFFFFF;"
+const mainNumLitLit = "font-family:ProbaNav2-Bold, Proba Nav2;font-size:600;font-weight:bold;fill:#FFFFFF;"
+
 func numSVG(street Street, w io.Writer) (err error) {
 	var height = 2539
 	var heightPhys = 215
@@ -61,56 +65,65 @@ func numSVG(street Street, w io.Writer) (err error) {
 	var yMainText = 1414
 	var widthLineShort int
 	var widthLineLong int
-	var mainNumBig = "font-family:ProbaNav2-Medium, Proba Nav2;font-size:1590;font-weight:400;fill:#FFFFFF;"
-	var mainNumLittle = "font-family:ProbaNav2-Medium, Proba Nav2;font-size:910;font-weight:500;fill:#FFFFFF;"
-	var mainNumBigMiddle = fmt.Sprint(mainNumBig, "text-anchor:middle;")
+	var arrowNumLeft = "font-family:ProbaNav2-Regular, Proba Nav2;font-size:372;fill:#FFFFFF;text-anchor:start"
+	var arrowNumRight = "font-family:ProbaNav2-Regular, Proba Nav2;font-size:372;fill:#FFFFFF;text-anchor:end"
 	arrow := "M22.3614357,78.754834 L89.0954544,12.0208153 L77.7817459,0.707106781 L2.13162821e-14,78.4888527 L0.265981284,78.754834 L2.13162821e-14,79.0208153 L77.7817459,156.802561 L89.0954544,145.488853 L22.3614357,78.754834 Z"
 	var arrowTranslate1 int
 	var arrowTranslate2 int
 	canvas := svg.New(w)
 	numLen := utf8.RuneCountInString(street.Num)
-	reNum := regexp.MustCompile("^([0-9]+)$")
-	reNumAndLetter := regexp.MustCompile("([0-9]+)([^0-9])$")
-	reSlash := regexp.MustCompile("/")
+	matchedString := regexp.MustCompile("^([0-9]+)([^0-9]?/?[0-9]*)?([^0-9])?$").FindStringSubmatch(street.Num)
+	fmt.Println(matchedString)
 	bigNums := []bigNumStruct{}
 	switch {
 	case numLen <= 2:
+		fmt.Println("Type 1: ")
 		width = 2539
 		widthPhys = 215
 		widthLineShort = 720
 		widthLineLong = 1619
 		arrowTranslate1 = 1290
 		arrowTranslate2 = 920
-		if parsed := reNum.FindStringSubmatch(street.Num); parsed != nil {
-			bigNums = append(bigNums, bigNumStruct{style: mainNumBigMiddle, num: parsed[0], x: width / 2})
-		} else if parsed := reNumAndLetter.FindStringSubmatch(street.Num); parsed != nil {
-			bigNums = append(bigNums, bigNumStruct{style: mainNumBig, num: parsed[0], x: 385})
-			bigNums = append(bigNums, bigNumStruct{style: mainNumLittle, num: parsed[1], x: 385 + 400})
-		}
-	case numLen == 3 || numLen == 4 && reSlash.MatchString(street.Num):
+		bigNums = subMatch(width, matchedString)
+	case numLen == 3 || numLen == 4 && len(matchedString[1]) == 1:
+		fmt.Println("Type 2: ")
 		width = 3248
 		widthPhys = 275
 		widthLineShort = 1049
+		widthLineLong = 2293
 		arrowTranslate1 = 1776
 		arrowTranslate2 = 1244
-	case numLen == 4 || numLen == 5 && reSlash.MatchString(street.Num):
+		bigNums = subMatch(width, matchedString)
+	case numLen == 4 || numLen == 5 && len(matchedString[1]) == 2:
+		fmt.Println("Type 3: ")
 		width = 4015
 		widthPhys = 340
 		widthLineShort = 1428
+		widthLineLong = 3060
 		arrowTranslate1 = 2349
 		arrowTranslate2 = 1623
+		bigNums = subMatch(width, matchedString)
 	default:
 		width = 5196
 		widthPhys = 440
 		widthLineShort = 2018
+		widthLineLong = 4236
 		arrowTranslate1 = 3237
 		arrowTranslate2 = 2218
+		bigNums = subMatch(width, matchedString)
 	}
 	canvas.Startunit(widthPhys, heightPhys, "mm", fmt.Sprintf(`viewBox="0 0 %v %v"`, width, height))
 	canvas.Roundrect(0, 0, width, height, 50, 50, "fill:#262741")
 	for _, num := range bigNums {
 		canvas.Text(num.x, yMainText, num.num, num.style)
+		// canvas.Rect(num.x, 0, 16, 9999, "fill:#FFFFFF")
 	}
+	// canvas.Text(391, yMainText, "2", fmt.Sprint(mainNumBig, ";fill:#B22222;"))
+	// canvas.Text(1269, yMainText, "2", fmt.Sprint(mainNumBig, ";fill:#B22222;")) // 878 == 1.810933941
+	// canvas.Text(width/2, yMainText, "22", fmt.Sprint(mainNumBig, ";fill:#B22222;text-anchor:middle;"))
+	// canvas.Text(width/2-500/2+501, yMainText, "2", fmt.Sprint(mainNumBig, ";fill:#B22222;"))
+	// canvas.Text(width/2+878/2, yMainText, "2", fmt.Sprint(mainNumBig, ";fill:#B22222;")) // 878 == 1.810933941
+
 	canvas.Gtransform("translate(470, 1716)")
 	if street.Prev != "" {
 		canvas.Path(arrow, "fill:#FFFFFF;")
@@ -130,6 +143,26 @@ func numSVG(street Street, w io.Writer) (err error) {
 	}
 	canvas.Gend()
 
+	canvas.Text(470, 2226, street.Prev, arrowNumLeft)
+	canvas.Text(490+widthLineLong, 2226, street.Next, arrowNumRight)
+
 	canvas.End()
 	return nil
+}
+
+func subMatch(width int, parsed []string) (bigNums []bigNumStruct) {
+	fmt.Println(parsed)
+	widthText := (len(parsed[1]) * 878 / 2) + (utf8.RuneCountInString(parsed[2]) * 500 / 2) + (utf8.RuneCountInString(parsed[3]) * 500 / 2)
+	for _, r := range parsed[1] {
+		bigNums = append(bigNums, bigNumStruct{style: mainNumBig, num: string(r), x: width/2 - widthText})
+		widthText -= 878
+	}
+	for _, r := range parsed[2] {
+		bigNums = append(bigNums, bigNumStruct{style: mainNumLittle, num: string(r), x: width/2 - widthText})
+		widthText -= 500
+	}
+	for _, r := range parsed[3] {
+		bigNums = append(bigNums, bigNumStruct{style: mainNumLitLit, num: string(r), x: width/2 - widthText})
+	}
+	return bigNums
 }
