@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHttpHandlerErrJson(t *testing.T) {
@@ -16,7 +17,7 @@ func TestHttpHandlerErrJson(t *testing.T) {
 	body := strings.NewReader("")
 	req := httptest.NewRequest("POST", "/", body)
 	res := httptest.NewRecorder()
-	httpHandler(res, req)
+	archiveHandler(res, req, reqTypeArchive)
 	assert.Equal(http.StatusInternalServerError, res.Result().StatusCode, "")
 
 }
@@ -75,7 +76,7 @@ func TestRenderStepSucc(t *testing.T) {
 	}
 	street.createID()
 	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
-	defer removeDirs(dir)
+	// defer removeDirs(dir)
 	err := renderSVG(street, dir)
 	assert.NoError(t, err, "render SVG files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.svg"))
@@ -88,10 +89,10 @@ func TestRenderStepSucc(t *testing.T) {
 	assert.NoError(t, err, "render EPS files")
 	_, err = os.Stat(fmt.Sprint(dir, "/street.eps"))
 	assert.Nil(t, err, "Check eps file exist")
-	err = removeSVG(dir)
-	assert.NoError(t, err, "remove SVG files")
-	_, err = os.Stat(fmt.Sprint(dir, "/street.svg"))
-	assert.NotNil(t, err, "Check png file was removed")
+	// err = removeSVG(dir)
+	// assert.NoError(t, err, "remove SVG files")
+	// _, err = os.Stat(fmt.Sprint(dir, "/street.svg"))
+	// assert.NotNil(t, err, "Check png file was removed")
 }
 
 func TestRenderStepFail(t *testing.T) {
@@ -110,7 +111,7 @@ func TestRenderStepFail(t *testing.T) {
 	assert.NotNil(t, err, "Check eps file exist")
 }
 
-func TestMakeArchiveSucc(t *testing.T) {
+func TestMakeArchive(t *testing.T) {
 	if testing.Short() {
 		t.Skip("Skip integration test in short mode")
 	}
@@ -150,5 +151,76 @@ func TestMakeAllImages(t *testing.T) {
 	assert.NoError(t, err, "")
 	err = renderEPS(dir)
 	assert.NoError(t, err, "")
+
+}
+
+func TestPngRender(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skip integration test in short mode")
+	}
+	street := Street{
+		NameUA: "Щорса",
+		Num:    "2",
+		Type:   "provulok",
+		Prev:   "31",
+		Next:   "33",
+	}
+	street.createID()
+	dir, _ := ioutil.TempDir(tmpDirPath, "archive")
+	defer removeDirs(dir)
+	err := renderSVG(street, dir)
+	assert.NoError(t, err, "")
+	err = renderPNG(dir)
+	assert.NoError(t, err, "")
+	_, err = os.Stat(fmt.Sprint(dir, "/street.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(dir, "/num.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(dir, "/street_80.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(dir, "/num_80.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(dir, "/street_160.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(dir, "/num_160.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(dir, "/street_240.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(dir, "/num_160.png"))
+	assert.NoError(t, err, "render png files")
+
+}
+
+func TestMakePng(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skip integration test in short mode")
+	}
+	archiveDir = "/archive"
+	street := Street{
+		NameUA: "Щорса",
+		Num:    "2",
+		Type:   "provulok",
+		Prev:   "31",
+		Next:   "33",
+	}
+	street.createID()
+	archive, err := makePng(&street)
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(archive, "_street.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(archive, "_num.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(archive, "_street_80.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(archive, "_num_80.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(archive, "_street_160.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(archive, "_num_160.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(archive, "_street_240.png"))
+	assert.NoError(t, err, "render png files")
+	_, err = os.Stat(fmt.Sprint(archive, "_num_160.png"))
+	assert.NoError(t, err, "render png files")
 
 }
