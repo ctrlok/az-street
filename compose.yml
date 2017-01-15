@@ -7,9 +7,9 @@ containers:
       RTMP: /tmpdir/
       DEBUG: true
     volumes:
-      - ./opt/archive:/archive
-      - ./opt/tmpdir:/tmpdir
-      - ./fonts:/usr/share/fonts/ttf-probanav
+      - /opt/archive:/archive
+      - /opt/tmpdir:/tmpdir
+      - /fonts:/usr/share/fonts/ttf-probanav
     cmd: /bin/AZ-street
   nginx:
     image: ctrlok/azstreetnginx:latest
@@ -18,4 +18,4 @@ containers:
     link:
       - az
     volumes:
-      - ./opt/archive:/archive
+      - /opt/archive:/archive
