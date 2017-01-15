@@ -21,7 +21,7 @@ func streetSVG(street Street, w io.Writer) (err error) {
 	canvas := svg.New(w)
 	var width int
 	var widthPhys int
-	streetLen := utf8.RuneCountInString(street.NameUA)
+	streetLen := utf8.RuneCountInString(street.Name)
 	switch {
 	case streetLen <= 8:
 		width = 5197
@@ -40,10 +40,10 @@ func streetSVG(street Street, w io.Writer) (err error) {
 	}
 	canvas.Startunit(widthPhys, heightPhys, "mm", fmt.Sprintf(`viewBox="0 0 %v %v"`, width, height))
 	canvas.Roundrect(0, 0, width, height, 50, 50, "fill:#262741")
-	canvas.Text(422, yBigText, street.NameUA, bigTextStyle)
-	canvas.Text(xTextBegin, 493, street.TypeUA, littleTextStyle)
+	canvas.Text(422, yBigText, street.Name, bigTextStyle)
+	canvas.Text(xTextBegin, 493, street.Class, littleTextStyle)
 	canvas.Rect(xTextBegin, 1787, width-920, 16, "fill:#FFFFFF")
-	canvas.Text(xTextBegin, 2226, fmt.Sprintf("%s %s", street.NameEng, street.Type), littleTextStyle)
+	canvas.Text(xTextBegin, 2226, fmt.Sprintf("%s %s", street.NameEng, street.ClassEng), littleTextStyle)
 	canvas.End()
 	return err
 }
@@ -124,15 +124,15 @@ func numSVG(street Street, w io.Writer) (err error) {
 	}
 
 	canvas.Gtransform("translate(470, 1716)")
-	if street.Prev != "" {
+	if street.Left != "" {
 		canvas.Path(arrow, "fill:#FFFFFF;")
 	}
-	if street.Next != "" {
+	if street.Right != "" {
 		canvas.Gtransform(fmt.Sprintf("translate(%v, 78) scale(-1, 1) translate(-%v, -78) translate(%v, 0)", arrowTranslate1, arrowTranslate1, arrowTranslate2))
 		canvas.Path(arrow, "fill:#FFFFFF;")
 		canvas.Gend()
 	}
-	if street.Next != "" && street.Prev != "" {
+	if street.Right != "" && street.Left != "" {
 		canvas.Rect(20, 71, widthLineShort, 16, "fill:#FFFFFF;")
 		canvas.Gtransform(fmt.Sprintf("translate(%v, 78) scale(-1, 1) translate(-%v, -78) translate(%v, 0)", arrowTranslate1, arrowTranslate1, arrowTranslate2))
 		canvas.Rect(20, 71, widthLineShort, 16, "fill:#FFFFFF;")
@@ -142,8 +142,8 @@ func numSVG(street Street, w io.Writer) (err error) {
 	}
 	canvas.Gend()
 
-	canvas.Text(470, 2226, street.Prev, arrowNumLeft)
-	canvas.Text(490+widthLineLong, 2226, street.Next, arrowNumRight)
+	canvas.Text(470, 2226, street.Left, arrowNumLeft)
+	canvas.Text(490+widthLineLong, 2226, street.Right, arrowNumRight)
 
 	canvas.End()
 	return nil

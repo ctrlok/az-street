@@ -6,13 +6,14 @@ WORKDIR /home/inkscaper
 RUN mkdir -p .local/share && \
     touch .local/share/recently-used.xbel
 WORKDIR /go/src/github.com/ctrlok/AZ-street
-ADD vendor vendor
-ADD *.go /go/src/github.com/ctrlok/AZ-street
 ENV DEBUG=true
 ENV ARCHIVE=/archive
 RUN mkdir /archive
-RUN go test -test.short
+TAG az/test
+ADD vendor vendor
+ADD *.go /go/src/github.com/ctrlok/AZ-street
 RUN go test
+ATTACH sh
 RUN go build
 EXPORT AZ-street AZ-street
 

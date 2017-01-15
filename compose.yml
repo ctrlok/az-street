@@ -1,0 +1,21 @@
+namespace: azstreet
+containers:
+  az:
+    image: ctrlok/azstreet:latest
+    env:
+      ARCHIVE_DIR: /archive/
+      RTMP: /tmpdir/
+      DEBUG: true
+    volumes:
+      - ./opt/archive:/archive
+      - ./opt/tmpdir:/tmpdir
+      - ./fonts:/usr/share/fonts/ttf-probanav
+    cmd: /bin/AZ-street
+  nginx:
+    image: ctrlok/azstreetnginx:latest
+    ports:
+      - 8081:8081
+    link:
+      - az
+    volumes:
+      - ./opt/archive:/archive
