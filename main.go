@@ -46,13 +46,18 @@ func init() {
 		archiveDir = os.TempDir()
 		log.Debugf("Can't read env variable DEST... Will set to %s", archiveDir)
 	}
+	log.SetOutput(os.Stdout)
+	log.SetLevel(log.WarnLevel)
+	if os.Getenv("DEBUG") != "" {
+		log.SetLevel(log.DebugLevel)
+	}
 }
 
 func main() {
 	log.Info("Starting server")
 	log.Info("Setting up variables")
 	log.Infof("CONCURENCY = %s", concurencyLevel)
-	startLoop()
+	go startLoop()
 	http.HandleFunc("/", handlerGenerateArchiveAndPng)
 	err := http.ListenAndServe(":3001", nil)
 	if err != nil {
@@ -94,7 +99,7 @@ func handlerGenerateArchiveAndPng(w http.ResponseWriter, r *http.Request) {
 	t := startTimer()
 	street := Street{}
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(street)
+	err := decoder.Decode(&street)
 	if err != nil {
 		log.Errorf("Problem decoding json: %s", err)
 		http.Redirect(w, r, err.Error(), http.StatusInternalServerError)
@@ -130,17 +135,15 @@ func handlerGenerateArchiveAndPng(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	res := `{
 		"archive": "%s", 
-		"street": "%s_street.png", 
-		"num": "%s_num.png",
-		"street_80": "%s_street_80.png",
-		"num_80": "%s_num_80.png",
-		"street_160": "%s_street_160.png",
-		"num_160": "%s_num_160.png",
-		"street_240": "%s_street_240.png",
-		"num_240": "%s_num_240.png",
+		"street_80": "%s",
+		"num_80": "%s",
+		"street_160": "%s",
+		"num_160": "%s",
+		"street_240": "%s",
+		"num_240": "%s",
 	}`
 	tSendToUser := startTimer()
-	w.Write([]byte(fmt.Sprintf(res, result.files)))
+	w.Write([]byte(fmt.Sprintf(res, result.files[0], result.files[1], result.files[2], result.files[3], result.files[4], result.files[5], result.files[6])))
 	log.WithField("operation_time", tSendToUser.diff()).Debug("Response was sended to user")
 	log.WithField("operation_time", t.diff()).Debug("Finish all request")
 

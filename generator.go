@@ -91,6 +91,7 @@ func generatePNGfiles(log *logrus.Entry, dir string) (err error) {
 		pngPath := fmt.Sprint(dir, "/", name, ".png")
 		command := exec.Command("inkscape", "-z", "-T", "-e", pngPath, svgPath)
 		command.Stderr = os.Stderr
+		log.Debugf("make PNGfile (%s) from SVG (%s)", pngPath, svgPath)
 		err = command.Run()
 		if err != nil {
 			log.Errorf("Problem with generating PNG files: %s", err)
@@ -110,13 +111,14 @@ func generateEPSfiles(log *logrus.Entry, dir string) (err error) {
 		epsPath := fmt.Sprint(dir, "/", name, ".eps")
 		command := exec.Command("inkscape", "-z", "-T", "-E", epsPath, svgPath)
 		command.Stderr = os.Stderr
+		log.Debugf("make EPS file (%s) from SVG (%s)", epsPath, svgPath)
 		err = command.Run()
 		if err != nil {
 			log.Errorf("Problem with generating EPS files: %s", err)
 			return err
 		}
 	}
-	log.WithField("operation_time", t.diff()).Debug("PNG files generated")
+	log.WithField("operation_time", t.diff()).Debug("EPS files generated")
 	return
 }
 
@@ -127,12 +129,14 @@ func removeSVGfiles(log *logrus.Entry, dir string) (err error) {
 		svgPath := fmt.Sprint(dir, "/", name, ".svg")
 		command := exec.Command("rm", svgPath)
 		command.Stderr = os.Stderr
+		log.Debugf("Remove %s file", svgPath)
 		err = command.Run()
 		if err != nil {
 			log.Errorf("Problem with removing SVG files: %s", err)
 			return err
 		}
 	}
+	log.Debug("SVG files was remover")
 	return
 }
 
@@ -148,7 +152,7 @@ func makeArchive(log *logrus.Entry, dir string) (archive string, err error) {
 		log.Errorf("Problem with generating Archive: %s", err)
 		return "", err
 	}
-	log.WithField("operation_time", t.diff()).Debug("Archive created")
+	log.WithField("operation_time", t.diff()).Debugf("Archive created: %s", archive)
 	return
 }
 
@@ -162,6 +166,7 @@ func convertPNGfiles(log *logrus.Entry, dir string) (generatedFiles []string, er
 			resizedName := fmt.Sprint(dir, "_", name, "_", size, ".png")
 			command := exec.Command("convert", pngPath, "-resize", size, resizedName)
 			command.Stderr = os.Stderr
+			log.Debugf("Create new PNG file %s, from %s", resizedName, pngPath)
 			err = command.Run()
 			if err != nil {
 				log.Errorf("Problem with converting PNG files: %s", err)

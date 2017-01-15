@@ -73,7 +73,6 @@ func Test_generateFiles(t *testing.T) {
 	}
 
 	// move files to DST
-	archiveDir = "/opt"
 	dst, err := moveFiles(log, files, archive)
 	assert.NoError(t, err, "Files should move without error")
 	for _, file := range dst {

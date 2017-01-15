@@ -3,7 +3,7 @@ containers:
   az:
     image: ctrlok/azstreet:latest
     env:
-      ARCHIVE_DIR: /archive/
+      DEST: /archive/
       RTMP: /tmpdir/
       DEBUG: true
     volumes:
